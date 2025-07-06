@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Muro Anónimo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: auto;
+      padding: 20px;
+      background: #f0f0f0;
+    }
+    textarea {
+      width: 100%;
+      height: 80px;
+      font-size: 16px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    .comment {
+      background: #fff;
+      margin: 10px 0;
+      padding: 10px;
+      border-left: 5px solid var(--color, #ccc);
+      border-radius: 4px;
+      word-wrap: break-word;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Muro Anónimo</h1>
+
+  <textarea id="comment" placeholder="Escribe tu comentario..."></textarea><br>
+  Color de énfasis: <input type="color" id="color" value="#00cc88">
+  <button onclick="submitComment()">Enviar</button>
+
+  <h2>Comentarios recientes:</h2>
+  <div id="comments"></div>
+
+  <script>
+    // 🔧 Reemplaza con tu configuración real de Firebase:
+    const firebaseConfig = {
+      apiKey: "TU_API_KEY",
+      authDomain: "TU_DOMINIO.firebaseapp.com",
+      projectId: "TU_PROJECT_ID",
+      storageBucket: "TU_BUCKET.appspot.com",
+      messagingSenderId: "TU_SENDER_ID",
+      appId: "TU_APP_ID"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    function submitComment() {
+      const text = document.getElementById("comment").value.trim();
+      const color = document.getElementById("color").value;
+
+      if (!text) return alert("Escribe algo antes de enviar.");
+
+      db.collection("comentarios").add({
+        texto: text,
+        color: color,
+        fecha: firebase.firestore.FieldValue.serverTimestamp()
+      }).then(() => {
+        document.getElementById("comment").value = "";
+        loadComments();
+      }).catch(error => {
+        alert("Error al enviar: " + error.message);
+      });
+    }
+
+    function loadComments() {
+      db.collection("comentarios")
+        .orderBy("fecha", "desc")
+        .limit(50)
+        .get()
+        .then(snapshot => {
+          const container = document.getElementById("comments");
+          container.innerHTML = "";
+          snapshot.forEach(doc => {
+            const c = doc.data();
+            const div = document.createElement("div");
+            div.className = "comment";
+            div.style.setProperty("--color", c.color || "#ccc");
+            div.innerText = c.texto;
+            container.appendChild(div);
+          });
+        });
+    }
+
+    loadComments();
+  </script>
+
+</body>
+</html>
